@@ -4,24 +4,35 @@ from machine_learning.training.basic_trainer import BasicTrainer
 from machine_learning.loss_functions.basic_classification_loss import BasicClassificationLoss
 from machine_learning.reporting.wandb_reporter import WandB_Reporter
 
+from mlp_mixer import MLPMixer
+
 import torch
 import torch.nn as nn
 
 def main():
     device = init()
-    model = get_model()
+    
 
+    patch_size = 4
+    num_layers = 64
+    num_features = 64
+    expansion_factor = 3
+    dropout = 0.5
+
+    model = get_model(patch_size, num_layers, num_features, expansion_factor, dropout)
+
+    training_batch_size = 128
     training_loader, validation_loader, test_loader = get_data_loaders(
-        training_batch_size=128, 
+        training_batch_size=training_batch_size, 
         validation_batch_size=2048, 
         test_batch_size=128)
-
+    
     trainer = BasicTrainer(
         model, device, training_loader, validation_loader, test_loader, 
         BasicClassificationLoss(),
-        WandB_Reporter("cifar10", "vgg19_bn").report)
+        WandB_Reporter("cifar10_layers", f"MLPMIXER_{training_batch_size}:{patch_size}_{num_layers}_{num_features}_{expansion_factor}_{dropout}").report)
     
-    # trainer.train_n_epochs(0.0001, 2)
+    trainer.train_n_epochs(0.001, 100)
     print("Test accuracy: {}".format(trainer.test()))
 
 def init():
@@ -31,11 +42,17 @@ def init():
 
     return device
 
-def get_model():
-    cifar10_vgg19 = torch.hub.load('chenyaofo/pytorch-cifar-models', 'cifar10_vgg19_bn', pretrained=True, trust_repo=True)
-    print(cifar10_vgg19)
+def get_model(
+        patch_size, num_layers, num_features, expansion_factor,
+        dropout):
+    mlp_mixer = MLPMixer(
+        image_size=32, in_channels=3, 
+        patch_size=patch_size, num_layers=num_layers, num_features=num_features, expansion_factor=expansion_factor,
+        dropout=dropout,
+        num_classes=10)
+    print(mlp_mixer)
 
-    return cifar10_vgg19
+    return mlp_mixer
 
 def get_data_loaders(training_batch_size, validation_batch_size, test_batch_size):
     data_loader_factory = DataLoaderFactory(CIFAR10_DataProvider('datasets'))
