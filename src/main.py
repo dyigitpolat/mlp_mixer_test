@@ -13,10 +13,10 @@ def main():
     device = init()
     
 
-    patch_size = 4
-    num_layers = 64
-    num_features = 64
-    expansion_factor = 3
+    patch_size = 8
+    num_layers = 4
+    num_features = 96
+    expansion_factor = 2
     dropout = 0.5
 
     model = get_model(patch_size, num_layers, num_features, expansion_factor, dropout)
@@ -32,7 +32,7 @@ def main():
         BasicClassificationLoss(),
         WandB_Reporter("cifar10_layers", f"MLPMIXER_{training_batch_size}:{patch_size}_{num_layers}_{num_features}_{expansion_factor}_{dropout}").report)
     
-    trainer.train_n_epochs(0.001, 100)
+    trainer.train_n_epochs(0.001, 200)
     print("Test accuracy: {}".format(trainer.test()))
 
 def init():
