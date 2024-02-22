@@ -6,6 +6,8 @@ from machine_learning.reporting.wandb_reporter import WandB_Reporter
 
 from mlp_mixer import MLPMixer
 
+import torchvision
+
 import torch
 import torch.nn as nn
 
@@ -13,13 +15,14 @@ def main():
     device = init()
     
 
-    patch_size = 8
+    patch_size = 4
     num_layers = 4
     num_features = 96
     expansion_factor = 2
-    dropout = 0.5
+    dropout = 0.1
 
-    model = get_model(patch_size, num_layers, num_features, expansion_factor, dropout)
+    model = get_model( patch_size, num_layers, num_features, expansion_factor, dropout)
+    #model = get_vgg_model()
 
     training_batch_size = 128
     training_loader, validation_loader, test_loader = get_data_loaders(
@@ -30,7 +33,8 @@ def main():
     trainer = BasicTrainer(
         model, device, training_loader, validation_loader, test_loader, 
         BasicClassificationLoss(),
-        WandB_Reporter("cifar10_layers", f"MLPMIXER_{training_batch_size}:{patch_size}_{num_layers}_{num_features}_{expansion_factor}_{dropout}").report)
+        WandB_Reporter("cifar10_monday_final", f"MLPMIXER_{training_batch_size}:{patch_size}_{num_layers}_{num_features}_{expansion_factor}_{dropout}").report)
+        #WandB_Reporter("cifar10_x", f"VGG11_{training_batch_size}").report)
     
     trainer.train_n_epochs(0.001, 200)
     print("Test accuracy: {}".format(trainer.test()))
@@ -53,6 +57,10 @@ def get_model(
     print(mlp_mixer)
 
     return mlp_mixer
+
+
+def get_vgg_model():
+    return torchvision.models.vgg11_bn()
 
 def get_data_loaders(training_batch_size, validation_batch_size, test_batch_size):
     data_loader_factory = DataLoaderFactory(CIFAR10_DataProvider('datasets'))
